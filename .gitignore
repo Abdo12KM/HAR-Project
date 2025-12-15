@@ -1,0 +1,35 @@
+# Dataset (large files - download at runtime)
+UCI_HAR_Dataset.zip
+UCI HAR Dataset/
+
+.har_report.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+__MACOSX/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Keep models folder (needed for Streamlit)
+!models/
