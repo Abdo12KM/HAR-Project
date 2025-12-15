@@ -2,6 +2,7 @@
 Human Activity Recognition (HAR) - Streamlit App
 =================================================
 Interactive app for activity prediction using all trained models
+Supports single sample prediction and batch evaluation modes
 """
 
 import streamlit as st
@@ -101,6 +102,19 @@ def predict_with_classical(model, features, scaler, pca):
     return prediction, probabilities
 
 
+def predict_batch_classical(model, features_array, scaler, pca):
+    """Predict on multiple samples using classical ML models."""
+    # Scale and apply PCA
+    features_scaled = scaler.transform(features_array)
+    features_pca = pca.transform(features_scaled)
+    
+    # Predict
+    predictions = model.predict(features_pca)
+    probabilities = model.predict_proba(features_pca)
+    
+    return predictions, probabilities
+
+
 def predict_with_lstm(model, raw_signals, scaler):
     """Predict using LSTM model with raw signals."""
     # raw_signals shape: (128, 9)
@@ -189,9 +203,17 @@ def display_prediction_result(prediction, probabilities, model_name):
             st.progress(prob)
 
 
-def display_comparison(results):
+def display_comparison(results, show_lstm=True):
     """Display side-by-side comparison of all models."""
+    # Filter out LSTM models if not showing them
+    if not show_lstm:
+        results = {k: v for k, v in results.items() if k not in ['LSTM', 'Bi-LSTM']}
+    
     num_models = len(results)
+    if num_models == 0:
+        st.warning("No models available for this input type.")
+        return
+        
     cols = st.columns(num_models)
     
     for i, (model_name, data) in enumerate(results.items()):
@@ -206,6 +228,41 @@ def display_comparison(results):
                 'Probability': data['probabilities'] * 100
             })
             st.bar_chart(chart_data.set_index('Activity'), height=200)
+
+
+def display_batch_results(predictions_dict, labels=None):
+    """Display batch evaluation results."""
+    st.markdown("## 📊 Batch Evaluation Results")
+    
+    num_samples = len(list(predictions_dict.values())[0])
+    st.info(f"Evaluated **{num_samples}** samples")
+    
+    # Create columns for each model
+    cols = st.columns(len(predictions_dict))
+    
+    for i, (model_name, predictions) in enumerate(predictions_dict.items()):
+        with cols[i]:
+            st.markdown(f"### {model_name}")
+            
+            # Calculate accuracy if labels provided
+            if labels is not None:
+                accuracy = np.mean(predictions == labels) * 100
+                st.metric("Accuracy", f"{accuracy:.1f}%")
+            
+            # Prediction distribution
+            st.markdown("**Prediction Distribution:**")
+            unique, counts = np.unique(predictions, return_counts=True)
+            dist_data = pd.DataFrame({
+                'Activity': [ACTIVITY_LABELS[u].split(' ')[0] for u in unique],
+                'Count': counts
+            })
+            st.bar_chart(dist_data.set_index('Activity'), height=200)
+            
+            # Show percentages
+            with st.expander("View percentages"):
+                for u, c in zip(unique, counts):
+                    pct = c / num_samples * 100
+                    st.write(f"{ACTIVITY_LABELS[u]}: {c} ({pct:.1f}%)")
 
 
 # =============================================================================
@@ -243,6 +300,10 @@ def main():
     # Initialize variables
     features = None
     raw_signals = None
+    features_df = None  # For batch mode
+    labels = None  # Ground truth labels for batch mode
+    batch_mode = False
+    show_lstm = True  # Whether to show LSTM models
     
     # =============================================================================
     # INPUT METHOD: SIMULATED DATA
@@ -274,18 +335,69 @@ def main():
         uploaded_file = st.sidebar.file_uploader(
             "Upload CSV with 561 features",
             type=['csv', 'txt'],
-            help="CSV file with 561 features per row"
+            help="CSV file with 561 features per row (e.g., X_test.txt from UCI HAR Dataset)"
+        )
+        
+        # Optional: Upload ground truth labels
+        st.sidebar.markdown("### Optional: Ground Truth Labels")
+        labels_file = st.sidebar.file_uploader(
+            "Upload labels (y_test.txt)",
+            type=['csv', 'txt'],
+            help="Labels file for accuracy calculation",
+            key="labels_uploader"
         )
         
         if uploaded_file is not None:
             try:
                 df = pd.read_csv(uploaded_file, header=None, sep=r'\s+|,', engine='python')
                 if df.shape[1] == 561:
-                    features = df.iloc[0].values
-                    st.success(f"✅ Loaded {df.shape[0]} samples with 561 features")
+                    features_df = df
+                    num_samples = df.shape[0]
+                    st.success(f"✅ Loaded **{num_samples}** samples with 561 features")
                     
-                    # Generate corresponding raw signals (approximate)
-                    raw_signals = np.random.randn(128, 9) * 0.5
+                    # Load labels if provided
+                    if labels_file is not None:
+                        try:
+                            labels_df = pd.read_csv(labels_file, header=None, sep=r'\s+|,', engine='python')
+                            labels = labels_df.values.ravel() - 1  # Convert to 0-indexed
+                            st.success(f"✅ Loaded {len(labels)} ground truth labels")
+                        except Exception as e:
+                            st.warning(f"Could not load labels: {e}")
+                    
+                    # Mode selection
+                    st.sidebar.markdown("---")
+                    st.sidebar.markdown("### Prediction Mode")
+                    mode = st.sidebar.radio(
+                        "Select mode",
+                        ["🔍 Single Sample", "📊 Batch Evaluation"],
+                        help="Single sample: predict one sample at a time\nBatch: evaluate all samples"
+                    )
+                    
+                    if mode == "🔍 Single Sample":
+                        batch_mode = False
+                        # Sample selector
+                        sample_idx = st.sidebar.number_input(
+                            "Sample Index",
+                            min_value=0,
+                            max_value=num_samples - 1,
+                            value=0,
+                            step=1,
+                            help=f"Select which sample to predict (0 to {num_samples - 1})"
+                        )
+                        features = df.iloc[sample_idx].values
+                        st.info(f"📍 Predicting sample **{sample_idx}** of {num_samples}")
+                    else:
+                        batch_mode = True
+                        st.info(f"📊 Running batch evaluation on all {num_samples} samples")
+                    
+                    # LSTM warning for feature CSV
+                    show_lstm = False  # Hide LSTM for feature CSVs
+                    st.warning(
+                        "⚠️ **LSTM models hidden**: The uploaded file contains pre-extracted features (561 columns). "
+                        "LSTM models require raw time-series data (128 timesteps × 9 channels) which cannot be "
+                        "reconstructed from these features. Only classical models (Logistic Regression, Random Forest) "
+                        "are shown for accurate predictions."
+                    )
                 else:
                     st.error(f"Expected 561 features, got {df.shape[1]}")
             except Exception as e:
@@ -325,7 +437,27 @@ def main():
     # =============================================================================
     # MAKE PREDICTIONS
     # =============================================================================
-    if features is not None:
+    if batch_mode and features_df is not None:
+        # Batch evaluation mode
+        st.markdown("---")
+        
+        predictions_dict = {}
+        
+        # Logistic Regression batch predictions
+        lr_preds, _ = predict_batch_classical(
+            models['lr'], features_df.values, models['scaler_feat'], models['pca']
+        )
+        predictions_dict['Logistic Regression'] = lr_preds
+        
+        # Random Forest batch predictions
+        rf_preds, _ = predict_batch_classical(
+            models['rf'], features_df.values, models['scaler_feat'], models['pca']
+        )
+        predictions_dict['Random Forest'] = rf_preds
+        
+        display_batch_results(predictions_dict, labels)
+        
+    elif features is not None:
         st.markdown("---")
         st.markdown("## 📊 Prediction Results")
         
@@ -352,8 +484,8 @@ def main():
             'confidence': rf_proba[rf_pred] * 100
         }
         
-        # LSTM (only if raw signals available)
-        if raw_signals is not None:
+        # LSTM (only if raw signals available AND show_lstm is True)
+        if raw_signals is not None and show_lstm:
             lstm_pred, lstm_proba = predict_with_lstm(
                 models['lstm'], raw_signals, models['scaler_raw']
             )
@@ -375,18 +507,20 @@ def main():
                 }
         
         # Display comparison
-        display_comparison(results)
+        display_comparison(results, show_lstm=show_lstm)
         
         # Summary
         st.markdown("---")
         st.markdown("### 📋 Summary")
         
-        predictions = [ACTIVITY_LABELS[r['prediction']] for r in results.values()]
+        # Filter results for summary based on show_lstm
+        summary_results = {k: v for k, v in results.items() if show_lstm or k not in ['LSTM', 'Bi-LSTM']}
+        predictions = [ACTIVITY_LABELS[r['prediction']] for r in summary_results.values()]
         if len(set(predictions)) == 1:
             st.success(f"✅ All models agree: **{predictions[0]}**")
         else:
             st.warning("⚠️ Models disagree on the prediction")
-            for name, data in results.items():
+            for name, data in summary_results.items():
                 st.write(f"- {name}: {ACTIVITY_LABELS[data['prediction']]}")
     
     # =============================================================================
