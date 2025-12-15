@@ -72,6 +72,10 @@ def load_models():
         models['lr'] = joblib.load(os.path.join(MODELS_DIR, "logistic_regression.pkl"))
         models['rf'] = joblib.load(os.path.join(MODELS_DIR, "random_forest.pkl"))
         models['lstm'] = tf.keras.models.load_model(os.path.join(MODELS_DIR, "lstm_model.keras"))
+        # Try to load Bidirectional LSTM if available
+        bilstm_path = os.path.join(MODELS_DIR, "bilstm_model.keras")
+        if os.path.exists(bilstm_path):
+            models['bilstm'] = tf.keras.models.load_model(bilstm_path)
         models['scaler_feat'] = joblib.load(os.path.join(MODELS_DIR, "scaler_features.pkl"))
         models['scaler_raw'] = joblib.load(os.path.join(MODELS_DIR, "scaler_raw.pkl"))
         models['pca'] = joblib.load(os.path.join(MODELS_DIR, "pca.pkl"))
@@ -187,7 +191,8 @@ def display_prediction_result(prediction, probabilities, model_name):
 
 def display_comparison(results):
     """Display side-by-side comparison of all models."""
-    cols = st.columns(3)
+    num_models = len(results)
+    cols = st.columns(num_models)
     
     for i, (model_name, data) in enumerate(results.items()):
         with cols[i]:
@@ -214,11 +219,18 @@ def main():
     models, success = load_models()
     
     if not success:
-        st.error(f"⚠️ Could not load models. Please run `model_comparison.py` first.")
+        st.error(f"⚠️ Could not load models. Please run `phase1_har.py` and `phase2_har.py` first.")
         st.error(f"Error: {models.get('error', 'Unknown error')}")
         st.stop()
     
-    st.success("✅ All models loaded successfully!")
+    # Show loaded models
+    loaded_models = []
+    if 'lr' in models: loaded_models.append("Logistic Regression")
+    if 'rf' in models: loaded_models.append("Random Forest")
+    if 'lstm' in models: loaded_models.append("LSTM")
+    if 'bilstm' in models: loaded_models.append("Bidirectional LSTM")
+    
+    st.success(f"✅ Loaded models: {', '.join(loaded_models)}")
     
     # Sidebar - Input method selection
     st.sidebar.title("⚙️ Input Configuration")
@@ -349,6 +361,17 @@ def main():
                 'probabilities': lstm_proba,
                 'confidence': lstm_proba[lstm_pred] * 100
             }
+            
+            # Bidirectional LSTM (if available)
+            if 'bilstm' in models:
+                bilstm_pred, bilstm_proba = predict_with_lstm(
+                    models['bilstm'], raw_signals, models['scaler_raw']
+                )
+                results['Bi-LSTM'] = {
+                    'prediction': bilstm_pred,
+                    'probabilities': bilstm_proba,
+                    'confidence': bilstm_proba[bilstm_pred] * 100
+                }
         
         # Display comparison
         display_comparison(results)
@@ -371,8 +394,8 @@ def main():
     st.markdown("---")
     st.markdown("""
     <div style='text-align: center; color: gray;'>
-        <small>HAR Project - CS467 Selected Topics in Computer Science</small><br>
-        <small>Models: Logistic Regression (93.04%), Random Forest (88.46%), LSTM (93.01%)</small>
+        <small>HAR Project</small><br>
+        <small>Models: Logistic Regression, Random Forest, LSTM, Bidirectional LSTM</small>
     </div>
     """, unsafe_allow_html=True)
 

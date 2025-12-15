@@ -2,7 +2,10 @@
 UCI_HAR_Dataset.zip
 UCI HAR Dataset/
 
-.har_report.md
+.report.md
+.report2.md
+.guidelines.md
+har_report.pdf
 
 # Python
 __pycache__/

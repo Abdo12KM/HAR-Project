@@ -1,8 +1,8 @@
 """
-Human Activity Recognition (HAR) Using Smartphone Sensors - Phase 1
+Human Activity Recognition (HAR) Using Smartphone Sensors - Phase 1 (IMPROVED)
 =====================================================================
 Step 1: Preprocessing (loading, scaling, label encoding, PCA)
-Step 2: Model Training (Logistic Regression, Random Forest) with evaluation
+Step 2: Model Training (Logistic Regression, Random Forest) with HYPERPARAMETER TUNING
 """
 
 import os
@@ -36,8 +36,8 @@ ACTIVITY_LABELS = {
 }
 
 print("\n" + "=" * 60)
-print("HUMAN ACTIVITY RECOGNITION - PHASE 1")
-print("Pre-extracted Features: Preprocessing & Classical ML")
+print("HUMAN ACTIVITY RECOGNITION - PHASE 1 (IMPROVED)")
+print("Pre-extracted Features: Tuned Classical ML Models")
 print("=" * 60)
 
 # =============================================================================
@@ -121,20 +121,21 @@ print(
 )
 
 # =============================================================================
-# STEP 2: MODEL TRAINING
+# STEP 2: MODEL TRAINING (TUNED)
 # =============================================================================
 print("\n" + "=" * 60)
-print("STEP 2: MODEL TRAINING")
+print("STEP 2: MODEL TRAINING (IMPROVED)")
 print("=" * 60)
 
 # --- Logistic Regression ---
-print("\n[LOGISTIC REGRESSION]")
-print("  Training model...")
+print("\n[LOGISTIC REGRESSION - TUNED]")
+print("  Training model with C=0.1 for regularization...")
 lr_model = LogisticRegression(
     max_iter=1000,
     random_state=RANDOM_STATE,
     solver="lbfgs",
     n_jobs=-1,
+    C=0.1,  # Stronger regularization (Default=1.0)
 )
 lr_model.fit(X_train_pca, y_train_encoded)
 
@@ -193,7 +194,7 @@ plt.fill_between(
 plt.plot(train_sizes_lr, val_mean_lr, "o-", color="orange", label="Validation Score")
 plt.xlabel("Training Set Size", fontsize=12)
 plt.ylabel("Accuracy", fontsize=12)
-plt.title("Learning Curve - Logistic Regression", fontsize=14)
+plt.title("Learning Curve - Logistic Regression (Improved)", fontsize=14)
 plt.legend(loc="lower right")
 plt.grid(True, alpha=0.3)
 plt.ylim(0.7, 1.02)
@@ -213,16 +214,21 @@ plt.text(
     bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5),
 )
 plt.tight_layout()
-plt.savefig("lr_learning_curve.png", dpi=150, bbox_inches="tight")
+plt.savefig("lr_learning_curve_improved.png", dpi=150, bbox_inches="tight")
 plt.close()
-print(f"  Learning curve saved: lr_learning_curve.png")
+print(f"  Learning curve saved: lr_learning_curve_improved.png")
 print(f"  Fit Status: {lr_fit_status}")
 
 # --- Random Forest ---
-print("\n[RANDOM FOREST]")
-print("  Training model...")
+print("\n[RANDOM FOREST - TUNED]")
+print("  Training model with max_depth=15, min_samples_leaf=5...")
 rf_model = RandomForestClassifier(
-    n_estimators=100, max_depth=20, random_state=RANDOM_STATE, n_jobs=-1
+    n_estimators=100,
+    max_depth=15,  # Reduced from 20
+    min_samples_leaf=5,  # Added to prevent overfitting on noise
+    min_samples_split=10, # Added for stronger regularization
+    random_state=RANDOM_STATE,
+    n_jobs=-1
 )
 rf_model.fit(X_train_pca, y_train_encoded)
 
@@ -281,7 +287,7 @@ plt.fill_between(
 plt.plot(train_sizes_rf, val_mean_rf, "o-", color="orange", label="Validation Score")
 plt.xlabel("Training Set Size", fontsize=12)
 plt.ylabel("Accuracy", fontsize=12)
-plt.title("Learning Curve - Random Forest", fontsize=14)
+plt.title("Learning Curve - Random Forest (Improved)", fontsize=14)
 plt.legend(loc="lower right")
 plt.grid(True, alpha=0.3)
 plt.ylim(0.7, 1.02)
@@ -301,16 +307,16 @@ plt.text(
     bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5),
 )
 plt.tight_layout()
-plt.savefig("rf_learning_curve.png", dpi=150, bbox_inches="tight")
+plt.savefig("rf_learning_curve_improved.png", dpi=150, bbox_inches="tight")
 plt.close()
-print(f"  Learning curve saved: rf_learning_curve.png")
+print(f"  Learning curve saved: rf_learning_curve_improved.png")
 print(f"  Fit Status: {rf_fit_status}")
 
 # =============================================================================
 # SUMMARY
 # =============================================================================
 print("\n" + "=" * 60)
-print("PHASE 1 SUMMARY")
+print("PHASE 1 (IMPROVED) SUMMARY")
 print("=" * 60)
 
 print(f"\n[PREPROCESSING SUMMARY]")
@@ -318,7 +324,7 @@ print(f"  Original features: {original_features}")
 print(f"  PCA components: {pca.n_components_}")
 print(f"  Reduction: {(1 - pca.n_components_ / original_features) * 100:.1f}%")
 
-print(f"\n[MODEL COMPARISON]")
+print(f"\n[MODEL COMPARISON - IMPROVED]")
 print(
     f"\n  {'Model':<25} {'Test Accuracy':<15} {'Test Loss':<15} {'Test Precision':<15} {'Status'}"
 )
@@ -335,8 +341,8 @@ best_acc = max(lr_test_acc, rf_test_acc)
 print(f"\n  Best Model: {best_model} (Accuracy: {best_acc:.4f})")
 
 print("\n" + "=" * 60)
-print("PHASE 1 COMPLETE")
+print("PHASE 1 (IMPROVED) COMPLETE")
 print("=" * 60)
 print("\nOutput files generated:")
-print("  - lr_learning_curve.png (Logistic Regression complexity curve)")
-print("  - rf_learning_curve.png (Random Forest complexity curve)")
+print("  - lr_learning_curve_improved.png")
+print("  - rf_learning_curve_improved.png")
