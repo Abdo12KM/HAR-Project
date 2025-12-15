@@ -312,6 +312,37 @@ plt.close()
 print(f"  Learning curve saved: rf_learning_curve_improved.png")
 print(f"  Fit Status: {rf_fit_status}")
 
+
+# =============================================================================
+# SAVE MODELS
+# =============================================================================
+print("\n" + "=" * 60)
+print("SAVING MODELS")
+print("=" * 60)
+
+MODELS_DIR = "models"
+os.makedirs(MODELS_DIR, exist_ok=True)
+
+import joblib
+
+# Save Preprocessors
+print(f"[INFO] Saving preprocessors to '{MODELS_DIR}/'...")
+joblib.dump(scaler, os.path.join(MODELS_DIR, "scaler_features.pkl"))
+joblib.dump(pca, os.path.join(MODELS_DIR, "pca.pkl"))
+joblib.dump(encoder, os.path.join(MODELS_DIR, "label_encoder.pkl"))
+
+# Save Models
+print(f"[INFO] Saving trained models to '{MODELS_DIR}/'...")
+joblib.dump(lr_model, os.path.join(MODELS_DIR, "logistic_regression.pkl"))
+joblib.dump(rf_model, os.path.join(MODELS_DIR, "random_forest.pkl"))
+
+print("  - scaler_features.pkl")
+print("  - pca.pkl")
+print("  - label_encoder.pkl")
+print("  - logistic_regression.pkl")
+print("  - random_forest.pkl")
+print("Models saved successfully!")
+
 # =============================================================================
 # SUMMARY
 # =============================================================================
@@ -346,3 +377,4 @@ print("=" * 60)
 print("\nOutput files generated:")
 print("  - lr_learning_curve_improved.png")
 print("  - rf_learning_curve_improved.png")
+

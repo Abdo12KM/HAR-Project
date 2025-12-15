@@ -12,18 +12,16 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.metrics import accuracy_score, precision_score
+from sklearn.metrics import precision_score
 import warnings
 import joblib
-
-warnings.filterwarnings("ignore")
-
-# TensorFlow imports
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout, Bidirectional
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+
+warnings.filterwarnings("ignore")
 
 # =============================================================================
 # CONFIGURATION
@@ -123,38 +121,46 @@ def load_labels(data_type):
 def build_lstm_model(n_timesteps, n_channels, n_classes, bidirectional=False):
     """Build LSTM or Bidirectional LSTM model."""
     model = Sequential()
-    
+
     if bidirectional:
-        model.add(Bidirectional(LSTM(100, return_sequences=True), input_shape=(n_timesteps, n_channels)))
+        model.add(
+            Bidirectional(
+                LSTM(100, return_sequences=True), input_shape=(n_timesteps, n_channels)
+            )
+        )
         model.add(Dropout(0.4))
         model.add(Bidirectional(LSTM(50, return_sequences=False)))
         model.add(Dropout(0.4))
     else:
-        model.add(LSTM(100, return_sequences=True, input_shape=(n_timesteps, n_channels)))
+        model.add(
+            LSTM(100, return_sequences=True, input_shape=(n_timesteps, n_channels))
+        )
         model.add(Dropout(0.3))
         model.add(LSTM(50, return_sequences=False))
         model.add(Dropout(0.3))
-    
+
     model.add(Dense(n_classes, activation="softmax"))
-    
+
     model.compile(
         optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"]
     )
-    
+
     return model
 
 
-def train_and_evaluate(model, X_train, y_train, X_test, y_test, y_test_encoded, model_name):
+def train_and_evaluate(
+    model, X_train, y_train, X_test, y_test, y_test_encoded, model_name
+):
     """Train model and return metrics."""
     print(f"\n[TRAINING {model_name.upper()}]")
-    
+
     early_stopping = EarlyStopping(
         monitor="val_loss", patience=10, restore_best_weights=True, verbose=1
     )
     reduce_lr = ReduceLROnPlateau(
         monitor="val_loss", factor=0.5, patience=5, min_lr=0.0001, verbose=1
     )
-    
+
     history = model.fit(
         X_train,
         y_train,
@@ -164,13 +170,13 @@ def train_and_evaluate(model, X_train, y_train, X_test, y_test, y_test_encoded, 
         callbacks=[early_stopping, reduce_lr],
         verbose=1,
     )
-    
+
     # Evaluate
     test_loss, test_accuracy = model.evaluate(X_test, y_test, verbose=0)
     y_pred = model.predict(X_test, verbose=0)
     y_pred_classes = np.argmax(y_pred, axis=1)
     test_precision = precision_score(y_test_encoded, y_pred_classes, average="macro")
-    
+
     return {
         "history": history,
         "test_accuracy": test_accuracy,
@@ -229,7 +235,9 @@ X_test_scaled = X_test_scaled_2d.reshape(n_test_samples, n_timesteps, n_channels
 
 print(f"  Applied StandardScaler per channel")
 print(f"  Final shape: {X_train_scaled.shape}")
-print(f"  Train mean: {X_train_scaled.mean():.6f}, Train std: {X_train_scaled.std():.6f}")
+print(
+    f"  Train mean: {X_train_scaled.mean():.6f}, Train std: {X_train_scaled.std():.6f}"
+)
 
 # --- Label Encoding ---
 print("\n[LABEL ENCODING]")
@@ -268,7 +276,13 @@ print("-" * 40)
 lstm_model = build_lstm_model(n_timesteps, n_channels, n_classes, bidirectional=False)
 lstm_model.summary()
 lstm_results = train_and_evaluate(
-    lstm_model, X_train_scaled, y_train_onehot, X_test_scaled, y_test_onehot, y_test_encoded, "LSTM"
+    lstm_model,
+    X_train_scaled,
+    y_train_onehot,
+    X_test_scaled,
+    y_test_onehot,
+    y_test_encoded,
+    "LSTM",
 )
 
 # Save LSTM model
@@ -282,7 +296,13 @@ print("-" * 40)
 bilstm_model = build_lstm_model(n_timesteps, n_channels, n_classes, bidirectional=True)
 bilstm_model.summary()
 bilstm_results = train_and_evaluate(
-    bilstm_model, X_train_scaled, y_train_onehot, X_test_scaled, y_test_onehot, y_test_encoded, "Bidirectional LSTM"
+    bilstm_model,
+    X_train_scaled,
+    y_train_onehot,
+    X_test_scaled,
+    y_test_onehot,
+    y_test_encoded,
+    "Bidirectional LSTM",
 )
 
 # Save Bidirectional LSTM model
@@ -297,8 +317,15 @@ print("\n[GENERATING COMPARISON PLOTS]")
 fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
 # LSTM Loss Curve
-axes[0, 0].plot(lstm_results["history"].history["loss"], "b-", label="Training Loss", linewidth=2)
-axes[0, 0].plot(lstm_results["history"].history["val_loss"], "r-", label="Validation Loss", linewidth=2)
+axes[0, 0].plot(
+    lstm_results["history"].history["loss"], "b-", label="Training Loss", linewidth=2
+)
+axes[0, 0].plot(
+    lstm_results["history"].history["val_loss"],
+    "r-",
+    label="Validation Loss",
+    linewidth=2,
+)
 axes[0, 0].set_xlabel("Epoch", fontsize=12)
 axes[0, 0].set_ylabel("Loss", fontsize=12)
 axes[0, 0].set_title("Standard LSTM - Loss Curve", fontsize=14)
@@ -306,8 +333,18 @@ axes[0, 0].legend(loc="upper right")
 axes[0, 0].grid(True, alpha=0.3)
 
 # LSTM Accuracy Curve
-axes[0, 1].plot(lstm_results["history"].history["accuracy"], "b-", label="Training Accuracy", linewidth=2)
-axes[0, 1].plot(lstm_results["history"].history["val_accuracy"], "r-", label="Validation Accuracy", linewidth=2)
+axes[0, 1].plot(
+    lstm_results["history"].history["accuracy"],
+    "b-",
+    label="Training Accuracy",
+    linewidth=2,
+)
+axes[0, 1].plot(
+    lstm_results["history"].history["val_accuracy"],
+    "r-",
+    label="Validation Accuracy",
+    linewidth=2,
+)
 axes[0, 1].set_xlabel("Epoch", fontsize=12)
 axes[0, 1].set_ylabel("Accuracy", fontsize=12)
 axes[0, 1].set_title("Standard LSTM - Accuracy Curve", fontsize=14)
@@ -315,8 +352,15 @@ axes[0, 1].legend(loc="lower right")
 axes[0, 1].grid(True, alpha=0.3)
 
 # Bi-LSTM Loss Curve
-axes[1, 0].plot(bilstm_results["history"].history["loss"], "b-", label="Training Loss", linewidth=2)
-axes[1, 0].plot(bilstm_results["history"].history["val_loss"], "r-", label="Validation Loss", linewidth=2)
+axes[1, 0].plot(
+    bilstm_results["history"].history["loss"], "b-", label="Training Loss", linewidth=2
+)
+axes[1, 0].plot(
+    bilstm_results["history"].history["val_loss"],
+    "r-",
+    label="Validation Loss",
+    linewidth=2,
+)
 axes[1, 0].set_xlabel("Epoch", fontsize=12)
 axes[1, 0].set_ylabel("Loss", fontsize=12)
 axes[1, 0].set_title("Bidirectional LSTM - Loss Curve", fontsize=14)
@@ -324,8 +368,18 @@ axes[1, 0].legend(loc="upper right")
 axes[1, 0].grid(True, alpha=0.3)
 
 # Bi-LSTM Accuracy Curve
-axes[1, 1].plot(bilstm_results["history"].history["accuracy"], "b-", label="Training Accuracy", linewidth=2)
-axes[1, 1].plot(bilstm_results["history"].history["val_accuracy"], "r-", label="Validation Accuracy", linewidth=2)
+axes[1, 1].plot(
+    bilstm_results["history"].history["accuracy"],
+    "b-",
+    label="Training Accuracy",
+    linewidth=2,
+)
+axes[1, 1].plot(
+    bilstm_results["history"].history["val_accuracy"],
+    "r-",
+    label="Validation Accuracy",
+    linewidth=2,
+)
 axes[1, 1].set_xlabel("Epoch", fontsize=12)
 axes[1, 1].set_ylabel("Accuracy", fontsize=12)
 axes[1, 1].set_title("Bidirectional LSTM - Accuracy Curve", fontsize=14)
@@ -340,14 +394,24 @@ print(f"  Comparison curves saved: lstm_comparison_curves.png")
 # Bar chart comparison
 fig, ax = plt.subplots(figsize=(10, 6))
 models = ["Standard LSTM", "Bidirectional LSTM"]
-test_accuracies = [lstm_results["test_accuracy"] * 100, bilstm_results["test_accuracy"] * 100]
-test_precisions = [lstm_results["test_precision"] * 100, bilstm_results["test_precision"] * 100]
+test_accuracies = [
+    lstm_results["test_accuracy"] * 100,
+    bilstm_results["test_accuracy"] * 100,
+]
+test_precisions = [
+    lstm_results["test_precision"] * 100,
+    bilstm_results["test_precision"] * 100,
+]
 
 x = np.arange(len(models))
 width = 0.35
 
-bars1 = ax.bar(x - width/2, test_accuracies, width, label="Test Accuracy", color="#3498db")
-bars2 = ax.bar(x + width/2, test_precisions, width, label="Test Precision", color="#2ecc71")
+bars1 = ax.bar(
+    x - width / 2, test_accuracies, width, label="Test Accuracy", color="#3498db"
+)
+bars2 = ax.bar(
+    x + width / 2, test_precisions, width, label="Test Precision", color="#2ecc71"
+)
 
 ax.set_ylabel("Percentage (%)", fontsize=12)
 ax.set_title("LSTM vs Bidirectional LSTM - Performance Comparison", fontsize=14)
@@ -360,12 +424,26 @@ ax.grid(True, alpha=0.3, axis="y")
 # Add value labels
 for bar in bars1:
     height = bar.get_height()
-    ax.annotate(f"{height:.1f}%", xy=(bar.get_x() + bar.get_width() / 2, height),
-                xytext=(0, 3), textcoords="offset points", ha="center", va="bottom", fontsize=10)
+    ax.annotate(
+        f"{height:.1f}%",
+        xy=(bar.get_x() + bar.get_width() / 2, height),
+        xytext=(0, 3),
+        textcoords="offset points",
+        ha="center",
+        va="bottom",
+        fontsize=10,
+    )
 for bar in bars2:
     height = bar.get_height()
-    ax.annotate(f"{height:.1f}%", xy=(bar.get_x() + bar.get_width() / 2, height),
-                xytext=(0, 3), textcoords="offset points", ha="center", va="bottom", fontsize=10)
+    ax.annotate(
+        f"{height:.1f}%",
+        xy=(bar.get_x() + bar.get_width() / 2, height),
+        xytext=(0, 3),
+        textcoords="offset points",
+        ha="center",
+        va="bottom",
+        fontsize=10,
+    )
 
 plt.tight_layout()
 plt.savefig("lstm_bar_comparison.png", dpi=150, bbox_inches="tight")
@@ -386,22 +464,40 @@ print(f"  Total input features: {n_timesteps * n_channels}")
 print(f"  Scaling: StandardScaler (mean=0, std=1)")
 
 print(f"\n[MODEL COMPARISON]")
-print(f"\n  {'Model':<25} {'Test Acc':<12} {'Test Prec':<12} {'Test Loss':<12} {'Epochs'}")
+print(
+    f"\n  {'Model':<25} {'Test Acc':<12} {'Test Prec':<12} {'Test Loss':<12} {'Epochs'}"
+)
 print(f"  {'-' * 75}")
-print(f"  {'Standard LSTM':<25} {lstm_results['test_accuracy']*100:<12.2f} {lstm_results['test_precision']*100:<12.2f} {lstm_results['test_loss']:<12.4f} {len(lstm_results['history'].history['loss'])}")
-print(f"  {'Bidirectional LSTM':<25} {bilstm_results['test_accuracy']*100:<12.2f} {bilstm_results['test_precision']*100:<12.2f} {bilstm_results['test_loss']:<12.4f} {len(bilstm_results['history'].history['loss'])}")
+print(
+    f"  {'Standard LSTM':<25} {lstm_results['test_accuracy'] * 100:<12.2f} {lstm_results['test_precision'] * 100:<12.2f} {lstm_results['test_loss']:<12.4f} {len(lstm_results['history'].history['loss'])}"
+)
+print(
+    f"  {'Bidirectional LSTM':<25} {bilstm_results['test_accuracy'] * 100:<12.2f} {bilstm_results['test_precision'] * 100:<12.2f} {bilstm_results['test_loss']:<12.4f} {len(bilstm_results['history'].history['loss'])}"
+)
 
 # Determine best model
-best_model = "Bidirectional LSTM" if bilstm_results['test_accuracy'] > lstm_results['test_accuracy'] else "Standard LSTM"
-best_acc = max(lstm_results['test_accuracy'], bilstm_results['test_accuracy'])
-print(f"\n  Best Model: {best_model} (Accuracy: {best_acc*100:.2f}%)")
+best_model = (
+    "Bidirectional LSTM"
+    if bilstm_results["test_accuracy"] > lstm_results["test_accuracy"]
+    else "Standard LSTM"
+)
+best_acc = max(lstm_results["test_accuracy"], bilstm_results["test_accuracy"])
+print(f"\n  Best Model: {best_model} (Accuracy: {best_acc * 100:.2f}%)")
 
 # Fit status analysis
 lstm_gap = lstm_results["final_val_loss"] - lstm_results["final_train_loss"]
 bilstm_gap = bilstm_results["final_val_loss"] - bilstm_results["final_train_loss"]
 
-lstm_fit = "Overfitting" if lstm_gap > 0.3 else ("Underfitting" if lstm_results["final_train_loss"] > 0.5 else "Good Fit")
-bilstm_fit = "Overfitting" if bilstm_gap > 0.3 else ("Underfitting" if bilstm_results["final_train_loss"] > 0.5 else "Good Fit")
+lstm_fit = (
+    "Overfitting"
+    if lstm_gap > 0.3
+    else ("Underfitting" if lstm_results["final_train_loss"] > 0.5 else "Good Fit")
+)
+bilstm_fit = (
+    "Overfitting"
+    if bilstm_gap > 0.3
+    else ("Underfitting" if bilstm_results["final_train_loss"] > 0.5 else "Good Fit")
+)
 
 print(f"\n[FIT STATUS]")
 print(f"  Standard LSTM: {lstm_fit} (Train-Val Gap: {lstm_gap:.3f})")

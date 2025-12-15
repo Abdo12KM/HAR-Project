@@ -1,6 +1,8 @@
 # 🏃 Human Activity Recognition (HAR)
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](http://the-human-activity-recognition.streamlit.app/)
+
+**🚀 Live Demo:** [http://the-human-activity-recognition.streamlit.app/](http://the-human-activity-recognition.streamlit.app/)
 
 Predict human activities from smartphone sensor data using Machine Learning and Deep Learning.
 
@@ -19,6 +21,7 @@ pip install -r requirements.txt
 # Train models
 python phase1_har.py  # Classical ML (LR, RF)
 python phase2_har.py  # Deep Learning (LSTM, Bi-LSTM)
+python model_comparison.py # Generate comparison artifacts
 
 # Run app
 streamlit run streamlit_app.py
@@ -33,10 +36,16 @@ streamlit run streamlit_app.py
 
 | Model | Accuracy | Precision | Loss | Fit Status |
 |-------|----------|-----------|------|------------|
-| Logistic Regression | **93.28%** | 93.38% | 0.181 | Good Fit |
-| Standard LSTM | **92.67%** | 92.80% | 0.204 | Good Fit |
-| Bidirectional LSTM | 90.53% | 90.87% | 0.326 | Good Fit |
+| Logistic Regression | **93.28%** | **93.38%** | **0.181** | Good Fit (Mild Overfitting) |
+| Standard LSTM | 90.80% | 90.84% | 0.314 | Good Fit |
+| Bidirectional LSTM | 89.28% | 89.50% | 0.366 | Overfitting |
 | Random Forest | 88.33% | 88.88% | 0.554 | Overfitting |
+
+## 💡 Key Findings
+
+1.  **Classical ML Wins:** Logistic Regression outperformed Deep Learning (93.28% vs 90.80%) because well-engineered features captured the activity patterns effectively.
+2.  **PCA Efficiency:** Reducing features from 561 to 102 retained 95% variance and significantly sped up training while preventing overfitting.
+3.  **Simpler is Better:** The complex Bidirectional LSTM (189K params) performed worse than the simpler Standard LSTM (75K params) and Logistic Regression (612 params).
 
 ## 📁 Project Structure
 
@@ -45,7 +54,9 @@ streamlit run streamlit_app.py
 ├── models/               # Trained model files
 ├── phase1_har.py         # Classical ML (LR, RF with tuned hyperparameters)
 ├── phase2_har.py         # Deep Learning (LSTM & Bidirectional LSTM comparison)
-└── har_report.md         # Full project report
+├── model_comparison.py   # Script to compare all models and generate plots
+├── har_report.md         # Full project report
+└── requirements.txt      # Python dependencies
 ```
 
 ## 📚 Dataset

@@ -262,6 +262,7 @@ def main():
         
         features, raw_signals = generate_simulated_data(activity_to_simulate)
         st.info(f"📊 Simulated data generated for: {ACTIVITY_LABELS[activity_to_simulate]}")
+        st.caption("Note: Simulated data generates synthetic patterns and may not reflect real-world physics perfectly.")
     
     # =============================================================================
     # INPUT METHOD: CSV UPLOAD
