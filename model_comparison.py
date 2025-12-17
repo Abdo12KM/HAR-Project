@@ -72,8 +72,16 @@ def load_inertial_signals(data_type):
     return signals
 
 def determine_fit_status(train_loss, test_loss, train_acc, test_acc):
-    gap = test_loss - train_loss
-    if gap > 0.2 or (train_acc - test_acc) > 0.1:
+    """
+    Determine fit status based on train-test gap.
+    Using 0.3 threshold consistent with phase2_har.py's best-epoch methodology.
+    Note: For loaded models, we compare full train vs test sets, which typically
+    shows slightly larger gaps than validation during training.
+    """
+    loss_gap = test_loss - train_loss
+    acc_gap = train_acc - test_acc
+    
+    if loss_gap > 0.3 or acc_gap > 0.15:
         return "Overfitting"
     elif train_acc < 0.75:
         return "Underfitting"

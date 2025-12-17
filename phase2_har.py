@@ -177,15 +177,19 @@ def train_and_evaluate(
     y_pred_classes = np.argmax(y_pred, axis=1)
     test_precision = precision_score(y_test_encoded, y_pred_classes, average="macro")
 
+    # Find best epoch (minimum validation loss - same as early stopping)
+    best_epoch = np.argmin(history.history["val_loss"])
+    
     return {
         "history": history,
         "test_accuracy": test_accuracy,
         "test_loss": test_loss,
         "test_precision": test_precision,
-        "final_train_acc": history.history["accuracy"][-1],
-        "final_val_acc": history.history["val_accuracy"][-1],
-        "final_train_loss": history.history["loss"][-1],
-        "final_val_loss": history.history["val_loss"][-1],
+        "best_epoch": best_epoch + 1,  # 1-indexed for display
+        "best_train_acc": history.history["accuracy"][best_epoch],
+        "best_val_acc": history.history["val_accuracy"][best_epoch],
+        "best_train_loss": history.history["loss"][best_epoch],
+        "best_val_loss": history.history["val_loss"][best_epoch],
     }
 
 
@@ -484,24 +488,24 @@ best_model = (
 best_acc = max(lstm_results["test_accuracy"], bilstm_results["test_accuracy"])
 print(f"\n  Best Model: {best_model} (Accuracy: {best_acc * 100:.2f}%)")
 
-# Fit status analysis
-lstm_gap = lstm_results["final_val_loss"] - lstm_results["final_train_loss"]
-bilstm_gap = bilstm_results["final_val_loss"] - bilstm_results["final_train_loss"]
+# Fit status analysis (using best epoch metrics - matches restored weights)
+lstm_gap = lstm_results["best_val_loss"] - lstm_results["best_train_loss"]
+bilstm_gap = bilstm_results["best_val_loss"] - bilstm_results["best_train_loss"]
 
 lstm_fit = (
     "Overfitting"
     if lstm_gap > 0.3
-    else ("Underfitting" if lstm_results["final_train_loss"] > 0.5 else "Good Fit")
+    else ("Underfitting" if lstm_results["best_train_loss"] > 0.5 else "Good Fit")
 )
 bilstm_fit = (
     "Overfitting"
     if bilstm_gap > 0.3
-    else ("Underfitting" if bilstm_results["final_train_loss"] > 0.5 else "Good Fit")
+    else ("Underfitting" if bilstm_results["best_train_loss"] > 0.5 else "Good Fit")
 )
 
-print(f"\n[FIT STATUS]")
-print(f"  Standard LSTM: {lstm_fit} (Train-Val Gap: {lstm_gap:.3f})")
-print(f"  Bidirectional LSTM: {bilstm_fit} (Train-Val Gap: {bilstm_gap:.3f})")
+print(f"\n[FIT STATUS] (at best epoch)")
+print(f"  Standard LSTM: {lstm_fit} (Train-Val Gap: {lstm_gap:.3f}, Best Epoch: {lstm_results['best_epoch']})")
+print(f"  Bidirectional LSTM: {bilstm_fit} (Train-Val Gap: {bilstm_gap:.3f}, Best Epoch: {bilstm_results['best_epoch']})")
 
 print("\n" + "=" * 60)
 print("PHASE 2 COMPLETE")

@@ -15,6 +15,19 @@
 ## Complete Project Report
 
 > **Dataset:** UCI HAR Dataset
+> **Course:** Selected Topics in Computer Science - CS467
+
+**Supervisors:**
+
+- Assoc. Prof. Hanaa Bayoumy
+- Eng. Salma Mohamed
+
+**Team Members:**
+
+- Abdelrahman Khaled 20223343
+- Ahmed Mohamed 20223031
+- Mazen Hesham 20221971
+- Youssef Ahmed 20223546
 
 ---
 
@@ -372,7 +385,7 @@ This preserves temporal structure while normalizing each sensor channel independ
 | **Optimizer**        | Adam                      |
 | **Loss**             | Categorical Cross-Entropy |
 | **Batch Size**       | 64                        |
-| **Epochs**           | 50 (early stopping at 13) |
+| **Epochs**           | 50 (early stopping at 22) |
 | **Validation Split** | 20%                       |
 
 **Callbacks:**
@@ -382,13 +395,13 @@ This preserves temporal structure while normalizing each sensor channel independ
 
 **Results:**
 
-| Metric              | Value                 |
-| ------------------- | --------------------- |
-| **Test Accuracy**   | **90.80%**            |
-| **Test Precision**  | 90.84%                |
-| **Test Loss**       | 0.3138                |
-| **Training Epochs** | 13                    |
-| **Fit Status**      | Good Fit (Gap: 0.242) |
+| Metric              | Value                               |
+| ------------------- | ----------------------------------- |
+| **Test Accuracy**   | **91.69%**                          |
+| **Test Precision**  | 91.73%                              |
+| **Test Loss**       | 0.3403                              |
+| **Training Epochs** | 22 (best at epoch 12)               |
+| **Fit Status**      | Good Fit (Gap: 0.129 at best epoch) |
 
 **Analysis:**
 
@@ -412,20 +425,20 @@ This preserves temporal structure while normalizing each sensor channel independ
 
 **Results:**
 
-| Metric              | Value                    |
-| ------------------- | ------------------------ |
-| **Test Accuracy**   | **89.28%**               |
-| **Test Precision**  | 89.50%                   |
-| **Test Loss**       | 0.3663                   |
-| **Training Epochs** | 11                       |
-| **Fit Status**      | Overfitting (Gap: 0.393) |
+| Metric              | Value                               |
+| ------------------- | ----------------------------------- |
+| **Test Accuracy**   | **91.48%**                          |
+| **Test Precision**  | 91.56%                              |
+| **Test Loss**       | 0.2837                              |
+| **Training Epochs** | 17 (best at epoch 7)                |
+| **Fit Status**      | Good Fit (Gap: 0.095 at best epoch) |
 
 **Analysis:**
 
-- Slightly lower performance than standard LSTM
-- Increased complexity led to overfitting
-- Bidirectional processing didn't provide expected benefit
-- Higher parameter count (189K vs 75K) wasn't justified by results
+- Comparable performance to standard LSTM
+- Good generalization with proper regularization
+- Bidirectional processing captures patterns from both directions
+- Higher parameter count (189K vs 75K) provides marginal differences in accuracy
 
 ---
 
@@ -441,15 +454,15 @@ _Figure: Training and validation curves for both Standard LSTM (top) and Bidirec
 
 **Loss Curve Observations:**
 
-- Training loss decreases smoothly from 0.8 to 0.1
-- Validation loss stabilizes around 0.31
-- Curves separate at epoch 5, but gap remains controlled
-- Early stopping at epoch 13 prevented further overfitting
+- Training loss decreases smoothly from 0.7 to 0.07
+- Validation loss stabilizes around 0.22 at best epoch (12)
+- Curves separate gradually, but gap remains controlled
+- Early stopping at epoch 22, weights restored to best epoch 12
 
 **Accuracy Curve Observations:**
 
-- Training accuracy reaches 95.8%
-- Validation accuracy stabilizes at 90.8%
+- Training accuracy reaches 96%
+- Validation accuracy stabilizes at 93% at best epoch
 - Consistent improvement in early epochs
 - No erratic fluctuations (indicates stable training)
 
@@ -457,23 +470,23 @@ _Figure: Training and validation curves for both Standard LSTM (top) and Bidirec
 
 **Loss Curve Observations:**
 
-- Training loss drops sharply to 0.08
-- Validation loss increases from epoch 1 (0.24 → 0.48)
-- Clear divergence indicates overfitting
-- Model memorizes training data quickly
+- Training loss drops to 0.13 at best epoch
+- Validation loss reaches minimum around 0.22 at epoch 7
+- Validation loss increases after best epoch, triggering early stopping
+- Early stopping restored weights from best epoch, achieving Good Fit
 
 **Accuracy Curve Observations:**
 
 - Training accuracy reaches 96%
-- Validation accuracy peaks at 91.4% (epoch 1) then degrades
-- Performance deteriorates despite continued training
-- Classic overfitting pattern
+- Validation accuracy peaks at 91% around epoch 7
+- Best weights captured before performance degradation
+- Demonstrates importance of early stopping with weight restoration
 
 #### Performance Bar Chart Comparison
 
 ![LSTM Bar Comparison](lstm_bar_comparison.png)
 
-_Figure: Side-by-side comparison of test accuracy and precision for Standard LSTM vs Bidirectional LSTM. Standard LSTM shows superior performance with 90.8% accuracy compared to 89.3% for Bidirectional LSTM._
+_Figure: Side-by-side comparison of test accuracy and precision for Standard LSTM vs Bidirectional LSTM. Standard LSTM shows slightly superior performance with 91.69% accuracy compared to 91.48% for Bidirectional LSTM._
 
 ---
 
@@ -487,14 +500,14 @@ _Figure: Side-by-side comparison of test accuracy and precision for Standard LST
 
 _Figure: Comprehensive comparison of all four models across test accuracy, test precision, test loss, and model complexity (parameters). The chart clearly shows Logistic Regression's superior performance across accuracy and precision while maintaining the lowest complexity._
 
-| Model                   | Data Type           | Features | Test Accuracy | Test Precision | Test Loss | Fit Status    | Parameters |
-| ----------------------- | ------------------- | -------- | ------------- | -------------- | --------- | ------------- | ---------- |
-| **Logistic Regression** | Pre-extracted (PCA) | 102      | **93.28%**    | **93.38%**     | **0.181** | Overfitting\* | 618        |
-| Random Forest           | Pre-extracted (PCA) | 102      | 88.33%        | 88.88%         | 0.554     | Overfitting   | 2,000      |
-| **Standard LSTM**       | Raw Inertial        | 1,152    | **90.80%**    | **90.84%**     | **0.314** | Good Fit      | 74,506     |
-| Bidirectional LSTM      | Raw Inertial        | 1,152    | 89.28%        | 89.50%         | 0.366     | Overfitting   | 189,006    |
+| Model                   | Data Type           | Features | Test Accuracy | Test Precision | Test Loss | Fit Status  | Parameters |
+| ----------------------- | ------------------- | -------- | ------------- | -------------- | --------- | ----------- | ---------- |
+| **Logistic Regression** | Pre-extracted (PCA) | 102      | **93.28%**    | **93.38%**     | **0.181** | Good Fit    | 618        |
+| Random Forest           | Pre-extracted (PCA) | 102      | 88.33%        | 88.88%         | 0.554     | Overfitting | 2,000      |
+| **Standard LSTM**       | Raw Inertial        | 1,152    | **91.69%**    | **91.73%**     | 0.340     | Good Fit    | 74,506     |
+| Bidirectional LSTM      | Raw Inertial        | 1,152    | 91.48%        | 91.56%         | 0.284     | Good Fit    | 189,006    |
 
-_Note: Logistic Regression shows minimal overfitting (6.2% gap), which is borderline acceptable._
+_Note: LSTM fit status based on best epoch metrics where early stopping restored weights._
 
 ### 4.2 Key Findings
 
@@ -509,9 +522,9 @@ _Note: Logistic Regression shows minimal overfitting (6.2% gap), which is border
 3. **Simplicity Advantage:** Fewer parameters (612) reduces overfitting risk
 4. **Regularization:** L2 penalty effectively controls model complexity
 
-#### Finding 2: Deep Learning on Raw Data Shows Promise
+#### Finding 2: Deep Learning on Raw Data Shows Strong Results
 
-**LSTM Performance:** 90.80% accuracy (only 2.5% behind Logistic Regression)
+**Best LSTM Performance:** Standard LSTM with 91.69% accuracy (only 1.6% behind Logistic Regression)
 
 **Impressive Because:**
 
@@ -524,23 +537,23 @@ _Note: Logistic Regression shows minimal overfitting (6.2% gap), which is border
 
 **Complexity Ranking:** Bidirectional LSTM (189K params) > LSTM (75K) > Random Forest (2K) > Logistic Regression (612)
 
-**Performance Ranking:** Logistic Regression > LSTM > Bidirectional LSTM > Random Forest
+**Performance Ranking:** Logistic Regression > Standard LSTM > Bidirectional LSTM > Random Forest
 
-**Lesson:** More complexity ≠ Better performance. Simpler models with proper regularization often generalize better.
+**Lesson:** More complexity doesn't guarantee better performance. Standard LSTM slightly outperformed Bidirectional LSTM despite having fewer parameters. Classical ML with proper feature engineering still wins overall.
 
 #### Finding 4: Overfitting Patterns
 
 **Models with Overfitting:**
 
-- Bidirectional LSTM (Gap: 39.3%) - Severe
 - Random Forest (Gap: 13.8%) - Moderate
-- Logistic Regression (Gap: 6.2%) - Mild (borderline)
 
-**Model with Good Fit:**
+**Models with Good Fit:**
 
-- Standard LSTM (Gap: 24.2%)
+- Logistic Regression (Gap: 6.2%)
+- Standard LSTM (Gap: 0.129 at best epoch)
+- Bidirectional LSTM (Gap: 0.095 at best epoch)
 
-**Common Factor:** Overfitting severity correlates with model complexity and insufficient regularization. Note that Logistic Regression's minimal 6.2% gap is technically classified as overfitting but remains highly acceptable for production use.
+**Common Factor:** Deep learning models with proper regularization (dropout + early stopping) achieved good fit. Early stopping restores weights from the best epoch, which is crucial for accurate fit assessment.
 
 ---
 
@@ -551,8 +564,8 @@ _Note: Logistic Regression shows minimal overfitting (6.2% gap), which is border
 | Rank | Model               | Accuracy   | Gap to Baseline |
 | :--- | :------------------ | :--------- | :-------------- |
 | 1    | Logistic Regression | **93.28%** | -               |
-| 2    | Standard LSTM       | 90.80%     | -2.48%          |
-| 3    | Bidirectional LSTM  | 89.28%     | -4.00%          |
+| 2    | Standard LSTM       | 91.69%     | -1.59%          |
+| 3    | Bidirectional LSTM  | 91.48%     | -1.80%          |
 | 4    | Random Forest       | 88.33%     | -4.95%          |
 
 #### 4.3.2 Loss Comparison (Lower is Better)
@@ -560,8 +573,8 @@ _Note: Logistic Regression shows minimal overfitting (6.2% gap), which is border
 | Rank | Model               | Log Loss  | Performance |
 | :--- | :------------------ | :-------- | :---------- |
 | 1    | Logistic Regression | **0.181** | Excellent   |
-| 2    | Standard LSTM       | 0.314     | Good        |
-| 3    | Bidirectional LSTM  | 0.366     | Average     |
+| 2    | Bidirectional LSTM  | 0.284     | Good        |
+| 3    | Standard LSTM       | 0.340     | Good        |
 | 4    | Random Forest       | 0.554     | Poor        |
 
 #### 4.3.3 Precision Comparison
@@ -569,11 +582,11 @@ _Note: Logistic Regression shows minimal overfitting (6.2% gap), which is border
 | Rank | Model               | Precision (Macro) |
 | :--- | :------------------ | :---------------- |
 | 1    | Logistic Regression | **93.38%**        |
-| 2    | Standard LSTM       | 90.84%            |
-| 3    | Bidirectional LSTM  | 89.50%            |
+| 2    | Standard LSTM       | 91.73%            |
+| 3    | Bidirectional LSTM  | 91.56%            |
 | 4    | Random Forest       | 88.88%            |
 
-**Observation:** Rankings match accuracy, indicating balanced performance across all classes.
+**Observation:** Both LSTM variants achieve similar performance (~91.5%), demonstrating effective learning from raw sensor data without feature engineering.
 
 ---
 
@@ -582,8 +595,8 @@ _Note: Logistic Regression shows minimal overfitting (6.2% gap), which is border
 #### Accuracy vs Complexity
 
 **High Accuracy, Low Complexity:** Logistic Regression (93.28%, 612 params)  
-**Best Balance:** Standard LSTM (90.80%, 75K params)  
-**Poor Trade-off:** Bidirectional LSTM (89.28%, 189K params)
+**Best Deep Learning:** Standard LSTM (91.69%, 75K params)  
+**Similar Performance, Higher Cost:** Bidirectional LSTM (91.48%, 189K params)
 
 **Recommendation:** Choose Logistic Regression for production deployment.
 
@@ -593,8 +606,8 @@ _Note: Logistic Regression shows minimal overfitting (6.2% gap), which is border
 | ------------------- | ------------------------- | ------------- |
 | Logistic Regression | < 1 minute                | 93.28%        |
 | Random Forest       | 2-3 minutes               | 88.33%        |
-| Standard LSTM       | 8-10 minutes              | 90.80%        |
-| Bidirectional LSTM  | 15-20 minutes             | 89.28%        |
+| Standard LSTM       | 8-10 minutes              | 91.69%        |
+| Bidirectional LSTM  | 15-20 minutes             | 91.48%        |
 
 **Finding:** Logistic Regression provides best accuracy with minimal training time.
 
@@ -604,10 +617,10 @@ _Note: Logistic Regression shows minimal overfitting (6.2% gap), which is border
 | ------------------- | --------------------------- | ------------- |
 | Logistic Regression | High (feature coefficients) | 93.28%        |
 | Random Forest       | Medium (feature importance) | 88.33%        |
-| Standard LSTM       | Low (black box)             | 90.80%        |
-| Bidirectional LSTM  | Very Low (black box)        | 89.28%        |
+| Standard LSTM       | Low (black box)             | 91.69%        |
+| Bidirectional LSTM  | Very Low (black box)        | 91.48%        |
 
-**Finding:** Logistic Regression offers best balance of interpretability and accuracy.
+**Finding:** Logistic Regression offers best interpretability. For deep learning, Standard LSTM provides best accuracy with lower complexity.
 
 ---
 
@@ -643,11 +656,11 @@ _Note: Logistic Regression shows minimal overfitting (6.2% gap), which is border
 
 | Aspect              | Classical ML (LR) | Deep Learning (LSTM) | Winner        |
 | ------------------- | ----------------- | -------------------- | ------------- |
-| Accuracy            | 93.28%            | 90.80%               | Classical ML  |
+| Accuracy            | 93.28%            | 91.69%               | Classical ML  |
 | Training Time       | < 1 min           | 8-10 min             | Classical ML  |
 | Interpretability    | High              | Low                  | Classical ML  |
 | Feature Engineering | Required          | Not Required         | Deep Learning |
-| Generalization      | Excellent         | Good                 | Classical ML  |
+| Generalization      | Good              | Good                 | Tie           |
 | Model Size          | 612 params        | 75K params           | Classical ML  |
 
 **When Deep Learning Would Win:**
@@ -694,11 +707,11 @@ Pre-extracted features with domain knowledge (frequency analysis, statistical me
 
 #### Insight 2: Regularization is Critical
 
-Models with proper regularization (Logistic Regression with C=0.1, LSTM with dropout and early stopping) showed good fit, while models with insufficient regularization (Random Forest, Bidirectional LSTM) overfitted despite their complexity.
+Models with proper regularization (Logistic Regression with C=0.1, LSTMs with dropout and early stopping) showed good fit, while Random Forest overfitted despite hyperparameter constraints.
 
 #### Insight 3: Occam's Razor Applies
 
-The simplest model (Logistic Regression) achieved the best performance. Complex models (Bidirectional LSTM with 189K parameters) provided no benefit and increased overfitting risk.
+Simpler models performed better: Logistic Regression outperformed all others, and Standard LSTM (75K params) slightly outperformed Bidirectional LSTM (189K params). Complexity doesn't guarantee better results.
 
 #### Insight 4: PCA is Highly Effective
 
@@ -712,20 +725,20 @@ Despite lower accuracy, LSTM's ability to learn from raw signals without feature
 
 ### 5.3 Overfitting Analysis Summary
 
-| Model               | Train-Val Gap | Status             | Remedy Applied                                           |
-| ------------------- | ------------- | ------------------ | -------------------------------------------------------- |
-| Logistic Regression | 6.2%          | Mild Overfitting   | C=0.1 regularization (borderline acceptable) ✓           |
-| Random Forest       | 13.8%         | Overfitting        | max_depth, min_samples constraints (partially effective) |
-| Standard LSTM       | 24.2%         | Good Fit           | Dropout (0.3), Early Stopping ✓                          |
-| Bidirectional LSTM  | 39.3%         | Severe Overfitting | Dropout (0.4), Early Stopping (insufficient)             |
+| Model               | Train-Val Gap      | Status      | Remedy Applied                                           |
+| ------------------- | ------------------ | ----------- | -------------------------------------------------------- |
+| Logistic Regression | 6.2%               | Good Fit    | C=0.1 regularization effectively controlled complexity   |
+| Random Forest       | 13.8%              | Overfitting | max_depth, min_samples constraints (partially effective) |
+| Standard LSTM       | 0.129 (best epoch) | Good Fit    | Dropout (0.3), Early Stopping ✓                          |
+| Bidirectional LSTM  | 0.095 (best epoch) | Good Fit    | Dropout (0.4), Early Stopping ✓                          |
 
 **Lessons:**
 
 - Regularization must scale with model complexity
-- Early stopping is essential for neural networks
+- Early stopping is essential for neural networks and restores weights from best epoch
 - Ensemble methods (Random Forest) need careful tuning on small datasets
-- Bidirectional processing adds complexity without guaranteed benefit
-- Logistic Regression's 6.2% gap is minimal but technically exceeds the 5% threshold
+- Both LSTM variants achieved good fit with similar accuracy
+- Fit status should be assessed at the best epoch (where weights are restored), not the final epoch
 
 ---
 
@@ -749,8 +762,8 @@ Despite lower accuracy, LSTM's ability to learn from raw signals without feature
 
 1. **Logistic Regression:** Already near-optimal; focus on edge cases
 2. **Random Forest:** Increase regularization or reduce ensemble size
-3. **Standard LSTM:** Maintain current approach; add more data if available
-4. **Bidirectional LSTM:** Not recommended; complexity unjustified
+3. **Standard LSTM:** Best DL model; maintain current approach
+4. **Bidirectional LSTM:** Similar to Standard LSTM; extra complexity not justified
 
 ---
 
@@ -779,12 +792,12 @@ Yes, PCA significantly improved performance:
 
 **3. Did Deep Learning outperform Classical ML on raw data?**
 
-No, but with important caveats:
+No, but deep learning performed well:
 
-- LSTM (90.80%) achieved lower accuracy than Logistic Regression (93.28%)
-- However, LSTM learned directly from raw signals without feature engineering
-- LSTM would scale better with more data
-- LSTM is more adaptable to new sensor configurations
+- Standard LSTM (91.69%) achieved 1.6% lower accuracy than Logistic Regression (93.28%)
+- Both LSTM variants learned directly from raw signals without feature engineering
+- Deep learning models would likely scale better with more data
+- LSTMs are more adaptable to new sensor configurations
 - For this dataset size (7K samples), engineered features + classical ML is superior
 
 **4. Trade-offs analysis:**
